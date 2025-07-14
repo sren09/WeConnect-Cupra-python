@@ -11,7 +11,7 @@ SETUP_REQUIRED = (HERE / "setup_requirements.txt").read_text()
 TEST_REQUIRED = (HERE / "test_requirements.txt").read_text()
 
 setup(
-    name='weconnect-cupra-daern',
+    name='weconnect-cupra-custom',
     packages=find_packages(),
     version=open("weconnect_cupra/__version.py").readlines()[-1].split()[-1].strip("\"'"),
     description='Python API for the Cupra Born online services',
