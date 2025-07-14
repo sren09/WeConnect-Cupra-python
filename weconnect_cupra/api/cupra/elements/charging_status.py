@@ -32,78 +32,69 @@ class ChargingStatus(GenericStatus):
         super().__init__(vehicle=vehicle, parent=parent, statusId=statusId, fromDict=fromDict, fixAPI=fixAPI)
 
     def update(self, fromDict, ignoreAttributes=None):  # noqa: C901
-    ignoreAttributes = ignoreAttributes or []
-    LOG.debug('Update Charging status from dict')
+        ignoreAttributes = ignoreAttributes or []
+        LOG.debug('Update Charging status from dict')
 
-    # Cupra
-    if 'value' not in fromDict:
-        fromDict['value'] = fromDict
+        # Cupra
+        if 'value' not in fromDict:
+            fromDict['value'] = fromDict
 
-    if 'value' in fromDict:
-        self.remainingChargingTimeToComplete_min.fromDict(fromDict['value'], 'remainingChargingTimeToComplete_min')
-        self.chargingState.fromDict(fromDict['value'], 'chargingState')
-        self.chargeMode.fromDict(fromDict['value'], 'chargeMode')
+        if 'value' in fromDict:
+            self.remainingChargingTimeToComplete_min.fromDict(fromDict['value'], 'remainingChargingTimeToComplete_min')
+            self.chargingState.fromDict(fromDict['value'], 'chargingState')
+            self.chargeMode.fromDict(fromDict['value'], 'chargeMode')
+            self.chargePower_kW.fromDict(fromDict['value'], 'chargePower_kW')
+            if 'chargePower_kW' in fromDict['value']:
+                chargePower_kW = float(fromDict['value'].get('chargePower_kW') or 0)
+                if self.fixAPI and chargePower_kW != 0 \
+                        and self.chargingState.value in [ChargingStatus.ChargingState.OFF,
+                                                         ChargingStatus.ChargingState.READY_FOR_CHARGING,
+                                                         ChargingStatus.ChargingState.NOT_READY_FOR_CHARGING,
+                                                         ChargingStatus.ChargingState.CHARGE_PURPOSE_REACHED_NOT_CONSERVATION_CHARGING,
+                                                         ChargingStatus.ChargingState.ERROR]:
+                    chargePower_kW = 0.0
+                    LOG.debug('%s: Attribute chargePower_kW is %s while chargingState is %s. Setting 0 instead',
+                              self.getGlobalAddress(), fromDict['value']['chargePower_kW'], self.chargingState.value)
+                self.chargePower_kW.setValueWithCarTime(chargePower_kW, lastUpdateFromCar=None, fromServer=True)
+            else:
+                self.chargePower_kW.enabled = False
+            if 'chargeRate_kmph' in fromDict['value']:
+                chargeRate_kmph = float(fromDict['value'].get('chargeRate_kmph') or 0)
+                if self.fixAPI and chargeRate_kmph != 0 \
+                        and self.chargingState.value in [ChargingStatus.ChargingState.OFF,
+                                                         ChargingStatus.ChargingState.READY_FOR_CHARGING,
+                                                         ChargingStatus.ChargingState.NOT_READY_FOR_CHARGING,
+                                                         ChargingStatus.ChargingState.CHARGE_PURPOSE_REACHED_NOT_CONSERVATION_CHARGING,
+                                                         ChargingStatus.ChargingState.ERROR]:
+                    chargeRate_kmph = 0.0
+                    LOG.debug('%s: Attribute chargeRate_kmph is %s while chargingState is %s. Setting 0 instead',
+                              self.getGlobalAddress(), fromDict['value']['chargeRate_kmph'], self.chargingState.value)
+                self.chargeRate_kmph.setValueWithCarTime(chargeRate_kmph, lastUpdateFromCar=None, fromServer=True)
+            else:
+                self.chargeRate_kmph.enabled = False
+            self.chargeType.fromDict(fromDict['value'], 'chargeType')
+            self.chargingSettings.fromDict(fromDict['value'], 'chargingSettings')
+        else:
+            self.remainingChargingTimeToComplete_min.enabled = False
+            self.chargingState.enabled = False
+            self.chargeMode.enabled = False
+            self.chargePower_kW.enabled = False
+            self.chargeRate_kmph.enabled = False
+            self.chargeType.enabled = False
+            self.chargingSettings.enabled = False
 
-        # chargePower_kW sicher abfangen
-        chargePower = fromDict['value'].get('chargePower_kW')
-        try:
-            chargePower_kW = float(chargePower) if chargePower is not None else 0.0
-        except (ValueError, TypeError):
-            chargePower_kW = 0.0
-        if self.fixAPI and chargePower_kW != 0 \
-                and self.chargingState.value in [
-                    ChargingStatus.ChargingState.OFF,
-                    ChargingStatus.ChargingState.READY_FOR_CHARGING,
-                    ChargingStatus.ChargingState.NOT_READY_FOR_CHARGING,
-                    ChargingStatus.ChargingState.CHARGE_PURPOSE_REACHED_NOT_CONSERVATION_CHARGING,
-                    ChargingStatus.ChargingState.ERROR]:
-            LOG.debug('%s: Attribute chargePower_kW is %s while chargingState is %s. Setting 0 instead',
-                      self.getGlobalAddress(), chargePower, self.chargingState.value)
-            chargePower_kW = 0.0
-        self.chargePower_kW.setValueWithCarTime(chargePower_kW, lastUpdateFromCar=None, fromServer=True)
+        super().update(fromDict=fromDict, ignoreAttributes=(ignoreAttributes
+                                                            + [
+                                                                'remainingChargingTimeToComplete_min',
+                                                                'chargingState',
+                                                                'chargeMode',
+                                                                'chargePower_kW',
+                                                                'chargeRate_kmph',
+                                                                'chargeType',
+                                                                'chargingSettings'
+                                                            ]))
 
-        # chargeRate_kmph sicher abfangen
-        chargeRate = fromDict['value'].get('chargeRate_kmph')
-        try:
-            chargeRate_kmph = float(chargeRate) if chargeRate is not None else 0.0
-        except (ValueError, TypeError):
-            chargeRate_kmph = 0.0
-        if self.fixAPI and chargeRate_kmph != 0 \
-                and self.chargingState.value in [
-                    ChargingStatus.ChargingState.OFF,
-                    ChargingStatus.ChargingState.READY_FOR_CHARGING,
-                    ChargingStatus.ChargingState.NOT_READY_FOR_CHARGING,
-                    ChargingStatus.ChargingState.CHARGE_PURPOSE_REACHED_NOT_CONSERVATION_CHARGING,
-                    ChargingStatus.ChargingState.ERROR]:
-            LOG.debug('%s: Attribute chargeRate_kmph is %s while chargingState is %s. Setting 0 instead',
-                      self.getGlobalAddress(), chargeRate, self.chargingState.value)
-            chargeRate_kmph = 0.0
-        self.chargeRate_kmph.setValueWithCarTime(chargeRate_kmph, lastUpdateFromCar=None, fromServer=True)
-
-        self.chargeType.fromDict(fromDict['value'], 'chargeType')
-        self.chargingSettings.fromDict(fromDict['value'], 'chargingSettings')
-
-    else:
-        self.remainingChargingTimeToComplete_min.enabled = False
-        self.chargingState.enabled = False
-        self.chargeMode.enabled = False
-        self.chargePower_kW.enabled = False
-        self.chargeRate_kmph.enabled = False
-        self.chargeType.enabled = False
-        self.chargingSettings.enabled = False
-
-    super().update(fromDict=fromDict, ignoreAttributes=(ignoreAttributes
-                                                        + [
-                                                            'remainingChargingTimeToComplete_min',
-                                                            'chargingState',
-                                                            'chargeMode',
-                                                            'chargePower_kW',
-                                                            'chargeRate_kmph',
-                                                            'chargeType',
-                                                            'chargingSettings'
-                                                        ]))
-
-     def __str__(self):
+    def __str__(self):
         string = super().__str__()
         if self.chargingState.enabled:
             string += f'\n\tState: {self.chargingState.value.value}'  # pylint: disable=no-member
