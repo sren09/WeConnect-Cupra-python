@@ -13,7 +13,7 @@ TEST_REQUIRED = (HERE / "test_requirements.txt").read_text()
 setup(
     name='weconnect-cupra-sren09',
     packages=find_packages(),
-    version="0.2.0",
+    version="0.50.14",
     description='Python API for the Cupra Born online services',
     long_description=README,
     long_description_content_type="text/markdown",
