@@ -43,7 +43,6 @@ class ChargingStatus(GenericStatus):
             self.remainingChargingTimeToComplete_min.fromDict(fromDict['value'], 'remainingChargingTimeToComplete_min')
             self.chargingState.fromDict(fromDict['value'], 'chargingState')
             self.chargeMode.fromDict(fromDict['value'], 'chargeMode')
-            self.chargePower_kW.fromDict(fromDict['value'], 'chargePower_kW')
             if 'chargePower_kW' in fromDict['value']:
                 chargePower = fromDict['value'].get('chargePower_kW')
                 if chargePower is not None:
